@@ -1,0 +1,16 @@
+###
+GET http://localhost:13000/createPlacement
+
+###
+GET http://localhost:13000
+
+###
+POST http://localhost:13000/
+Content-Type: application/json
+
+{
+    "place_number": 309
+}
+
+###
+GET http://localhost:3000
