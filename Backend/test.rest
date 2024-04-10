@@ -1,16 +1,15 @@
 ###
-GET http://localhost:13000/createPlacement
-
-###
-GET http://localhost:13000
-
-###
-POST http://localhost:13000/
+POST http://localhost:3000/api/placements/store
 Content-Type: application/json
 
 {
-    "place_number": 309
+    "room_id": 218,
+    "number_of_seats": 30,
+    "available_seats": 30
 }
 
 ###
-GET http://localhost:3000
+GET  http://localhost:3000/api/placements/
+
+###
+GET http://localhost:3000/api/placements/309

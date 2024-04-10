@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import  QRCodeScannerScreen  from './QRCodeScannerScreen';
 import  QRInfoScreen  from './QRInfoScreen';
+import 'react-native-gesture-handler';
 
 const Stack = createStackNavigator();
 
@@ -17,6 +18,3 @@ export default function App() {
     </NavigationContainer>
   );
 }
-
-
-

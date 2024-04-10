@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { StyleSheet } from 'react-native';
-// import axios from 'axios';
+import axios from 'axios';
 
 const QRInfoScreen = () => {
     const route = useRoute();
@@ -16,17 +16,57 @@ const QRInfoScreen = () => {
 
     console.log('\nSplitted Data:', splittedData);
 
+    // axios.post('http://localhost:3000/api/placements/store', {
+    // "room_id": 1488,
+    // "number_of_seats": 25,
+    // "available_seats": 25
+    // }).then(response => {
+    //     console.log(response.data);
+    // }).catch(error => {
+    //     console.error(error);
+    // });
+
+    const makeAPICall = async () => {
+        try {
+            fetch('https://jsonplaceholder.typicode.com/todos/1')
+                .then(response => response.json())
+                .then(json => console.log(json))
+            // const settings = {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json'
+            //     },
+            //     body: JSON.stringify({
+            //         "room_id": 1488,
+            //         "number_of_seats": 25,
+            //         "available_seats": 25
+            //     }),
+            // }
+            // const response = await fetch('http://localhost:3000/api/placements/store', settings);
+            // const data = await response.json();
+            // console.log({ response });
+            // console.log({ data });
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    useEffect(() => {
+        makeAPICall();
+    }, [])
+
     // const handleAddUser = async () => {
     //     try {
-    //         const response = await axios.post('http://localhost:8081/api/addUser', { data: splittedData });
+    //         const response = await axios.post('http://localhost:3000/api/placements/store', {
+    //             "room_id": 1488,
+    //             "number_of_seats": 25,
+    //             "available_seats": 25
+    //         });
     //         console.log(response.data.message);
-    //         // Handle success response
     //     } catch (error) {
     //         console.error('Error inserting user:', error.response.data.error);
-    //         // Handle error
     //     }
     // };
-    // handleAddUser
+    // handleAddUser()
 
     return (
         <View style={styles.container}>
