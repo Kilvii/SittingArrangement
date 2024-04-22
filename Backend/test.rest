@@ -1,3 +1,20 @@
+### 80.242.56.152:5432 - для изменения бд
+### 80.242.56.152:13000 - для работы с бд
+
+### Server requests
+###
+GET http://80.242.56.152:13000/api/placements/
+
+###
+GET http://80.242.56.152:5432/api/placements/
+
+### Placements
+###
+GET http://localhost:3000/api/placements/
+
+###
+GET http://localhost:3000/api/placements/309
+
 ###
 POST http://localhost:3000/api/placements/store
 Content-Type: application/json
@@ -8,8 +25,31 @@ Content-Type: application/json
     "available_seats": 30
 }
 
+### users
 ###
-GET  http://localhost:3000/api/placements/
+GET http://localhost:3000/api/users/
 
 ###
-GET http://localhost:3000/api/placements/309
+GET http://localhost:3000/api/users/2
+
+###
+POST http://localhost:3000/api/users/store
+Content-Type: application/json
+
+{
+    "surname": "Мариева",
+    "firstname": "Мария",
+    "patronymic": "Амеговная",
+    "gender": "Женский",
+    "birthdate": "2002-11-11",
+    "age": 18,
+    "phone": "+79273408180",
+    "email": "beautygirl@gmail.com",
+    "school": "Лицей №12",
+    "address": "Саранск",
+    "classroom": 11,
+    "subject": "Химия",
+    "citizenship": "Россия",
+    "passport_series": 1234,
+    "passport_number": 123456
+}

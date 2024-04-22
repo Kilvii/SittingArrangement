@@ -7,7 +7,7 @@ CREATE TABLE users
     surname TEXT,
     firstname TEXT,
     patronymic TEXT,
-    gender BOOLEAN, 
+    gender TEXT, 
     birthdate DATE,
     age INT,
     phone TEXT, 
