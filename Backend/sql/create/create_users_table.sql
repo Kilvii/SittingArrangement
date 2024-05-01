@@ -18,5 +18,7 @@ CREATE TABLE users
     subject TEXT,
     citizenship TEXT,
     passport_series INT,
-    passport_number INT
+    passport_number INT,
+    room_id INT DEFAULT 0,
+    seat INT DEFAULT 0
 );

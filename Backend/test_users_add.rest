@@ -1,0 +1,87 @@
+###
+POST http://localhost:3000/api/users/store
+Content-Type: application/json
+
+{
+    "surname": "Рябикин",
+    "firstname": "Кирилл",
+    "patronymic": "Сергеевич",
+    "gender": "Мужской",
+    "birthdate": "2002-04-04",
+    "age": 22,
+    "phone": "+79277773180",
+    "email": "kirill@gmail.com",
+    "school": "Школа №13",
+    "address": "Тольятти",
+    "classroom": 11,
+    "subject": "Математика",
+    "citizenship": "Россия",
+    "passport_series": 1234,
+    "passport_number": 123456
+}
+
+###
+POST http://localhost:3000/api/users/store
+Content-Type: application/json
+
+{
+    "surname": "Абобус",
+    "firstname": "Виталий",
+    "patronymic": "Сергеевич",
+    "gender": "Мужской",
+    "birthdate": "2002-06-06",
+    "age": 20,
+    "phone": "+79273473180",
+    "email": "vitya26@gmail.com",
+    "school": "Школа №45",
+    "address": "Самара",
+    "classroom": 10,
+    "subject": "Математика",
+    "citizenship": "Россия",
+    "passport_series": 1234,
+    "passport_number": 123456
+}
+
+###
+POST http://localhost:3000/api/users/store
+Content-Type: application/json
+
+{
+    "surname": "Мариева",
+    "firstname": "Мария",
+    "patronymic": "Амеговная",
+    "gender": "Женский",
+    "birthdate": "2002-11-11",
+    "age": 18,
+    "phone": "+79273408180",
+    "email": "beautygirl@gmail.com",
+    "school": "Школа №45",
+    "address": "Саранск",
+    "classroom": 11,
+    "subject": "Химия",
+    "citizenship": "Россия",
+    "passport_series": 1234,
+    "passport_number": 123456
+}
+
+###
+POST http://localhost:3000/api/users/store
+Content-Type: application/json
+
+{
+    "surname": "Аржаева",
+    "firstname": "Юлия",
+    "patronymic": "Александровна",
+    "gender": "Женский",
+    "birthdate": "2000-03-20",
+    "age": 23,
+    "phone": "+78773473180",
+    "email": "regret@gmail.com",
+    "school": "Школа №18",
+    "address": "Пенза",
+    "classroom": 11,
+    "subject": "Русский Язык",
+    "citizenship": "Россия",
+    "passport_series": 1234,
+    "passport_number": 123456
+}
