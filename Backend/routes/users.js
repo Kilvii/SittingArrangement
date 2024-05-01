@@ -12,6 +12,7 @@ function setPerson(newUser, placements, users) {
     }
     currentRoomIndex += 1
   }
+  //XXX: Если все помещения заняты
   if (currentRoom === null) {
     console.log('All rooms occupied')
     pool.query('DELETE FROM users WHERE id = $1', [newUser['id']], (err, res) => {
@@ -27,6 +28,7 @@ function setPerson(newUser, placements, users) {
   const filteredUsers = users.filter(user => user['room_id'] === currentRoom['room_id']);
   const sortedUsers = filteredUsers.sort((a, b) => a['seat'] - b['seat']);
 
+  //XXX: Если это первый добавляемый объект в помещение
   if (users.length == 1 || sortedUsers.length == 0) {
     currentRoom['available_seats']--;
     newUser['seat'] = 1;
@@ -47,7 +49,9 @@ function setPerson(newUser, placements, users) {
     return;
   }
 
+  //XXX: Если люди из разных школ
   if (newUser['school'] !== sortedUsers[sortedUsers.length - 1]['school']) {
+    //XXX: Проверка на то, был ли скачок через место
     for (let i = 1; i < sortedUsers.length; i++) {
       if (sortedUsers[i]['seat'] - sortedUsers[i - 1]['seat'] !== 1) {
         newUser['seat'] = (sortedUsers[i]['seat'] + sortedUsers[i - 1]['seat']) / 2;
@@ -70,6 +74,7 @@ function setPerson(newUser, placements, users) {
       }
     }
 
+    //XXX: Посадить на следующее место
     newUser['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 1
     newUser['room_id'] = currentRoom['room_id']
     currentRoom['available_seats']--;
@@ -89,8 +94,11 @@ function setPerson(newUser, placements, users) {
     return;
 
   }
+
+  //XXX: Если люди из одной школы
   else {
     newUser['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 2
+    //XXX: Проверка на то, нужен ли переход на другое помещение
     if (newUser['seat'] > currentRoom['number_of_seats']) {
       currentRoomIndex += 1
       if ((currentRoomIndex == placements.length)) {
@@ -108,6 +116,7 @@ function setPerson(newUser, placements, users) {
       const newFilteredUsers = users.filter(user => user['room_id'] === currentRoom['room_id']);
       const newSortedUsers = newFilteredUsers.sort((a, b) => a['seat'] - b['seat']);
 
+      //XXX: Проверка на то, первый ли это объект после перемещения помещения
       if (newSortedUsers.length == 0) {
         currentRoom['available_seats']--;
         newUser['seat'] = 1;
@@ -127,6 +136,7 @@ function setPerson(newUser, placements, users) {
         console.log(`User ${newUser['surname']} sits in room ${newUser['room_id']} in place ${newUser['seat']} :jump room start: avail_seat = ${currentRoom['available_seats']} has left`);
         return;
       }
+      //XXX: Если после перемещения добавляемый объект не первый
       else {
         newUser['seat'] = newSortedUsers[newSortedUsers.length - 1]['seat'] + 2
         newUser['room_id'] = currentRoom['room_id']
@@ -147,6 +157,7 @@ function setPerson(newUser, placements, users) {
         return;
       }
     }
+    //XXX: Переход на другое помещение не нужен
     else {
       newUser['room_id'] = currentRoom['room_id']
       currentRoom['available_seats']--;
