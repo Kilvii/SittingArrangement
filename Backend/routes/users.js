@@ -3,8 +3,6 @@ var router = express.Router();
 const pool = require('../db')
 
 function setPerson(newUser, placements, users) {
-  // const sortedUsers = users.sort((a, b) => a['seat'] - b['seat']);
-  // console.log(sortedUsers)
   let currentRoom = null;
   let currentRoomIndex = 0;
   for (room of placements) {
@@ -16,16 +14,16 @@ function setPerson(newUser, placements, users) {
   }
   if (currentRoom === null) {
     console.log('All rooms occupied')
+    pool.query('DELETE FROM users WHERE id = $1', [newUser['id']], (err, res) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(`User with id ${newUser['id']} removed from database`);
+      }
+    });
     return
   }
 
-  // const sortedUsers = users.sort((a, b) => {
-  //   if (a['room_id'] !== b['room_id']) {
-  //     return a['room_id'] - b['room_id'];
-  //   } else {
-  //     return a['seat'] - b['seat'];
-  //   }
-  // });
   const filteredUsers = users.filter(user => user['room_id'] === currentRoom['room_id']);
   const sortedUsers = filteredUsers.sort((a, b) => a['seat'] - b['seat']);
 
@@ -50,39 +48,7 @@ function setPerson(newUser, placements, users) {
   }
 
   if (newUser['school'] !== sortedUsers[sortedUsers.length - 1]['school']) {
-    // if (currentRoom['number_of_seats'] - currentRoom['available_seats'] === 0) {
-    //   currentRoom['available_seats']--;
-    //   newUser['seat'] = currentRoom['number_of_seats'] - currentRoom['available_seats'];
-    //   newUser['room_id'] = currentRoom['room_id']
-    //   pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [currentRoom['available_seats'], currentRoom['room_id']], (err, res) => {
-    //     if (err) {
-    //       console.log(err);
-    //       return;
-    //     }
-    //   });
-    //   pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [newUser['seat'], newUser['room_id'], newUser['id']], (err, res) => {
-    //     if (err) {
-    //       console.log(err);
-    //       return;
-    //     }
-    //   });
-    //   console.log(`User ${newUser['surname']} sits in room ${newUser['room_id']} in place ${newUser['seat']} :2: avail_seat = ${currentRoom['available_seats']} has left`);
-    //   return;
-    // }
-    // else {
-
-
-    // currentRoom['available_seats']--;
-    // pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [currentRoom['available_seats'], currentRoom['room_id']], (err, res) => {
-    //   if (err) {
-    //     console.log(err);
-    //     return;
-    //   }
-    // });
-
     for (let i = 1; i < sortedUsers.length; i++) {
-      // if (sortedUsers[i]['room_id'] === sortedUsers[i - 1]['room_id']) {
-      // console.log(sortedUsers[i]['seat'] - sortedUsers[i - 1]['seat'] !== 1)
       if (sortedUsers[i]['seat'] - sortedUsers[i - 1]['seat'] !== 1) {
         newUser['seat'] = (sortedUsers[i]['seat'] + sortedUsers[i - 1]['seat']) / 2;
         newUser['room_id'] = currentRoom['room_id']
@@ -102,7 +68,6 @@ function setPerson(newUser, placements, users) {
         console.log(`User ${newUser['surname']} sits in room ${newUser['room_id']} in place ${newUser['seat']} :insert between: avail_seat = ${currentRoom['available_seats']} has left`);
         return;
       }
-      // }
     }
 
     newUser['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 1
@@ -123,52 +88,22 @@ function setPerson(newUser, placements, users) {
     console.log(`User ${newUser['surname']} sits in room ${newUser['room_id']} in place ${newUser['seat']} :insert next:  avail_seat = ${currentRoom['available_seats']} has left`);
     return;
 
-    // newUser['seat'] = currentRoom['number_of_seats'] - currentRoom['available_seats'];
-    // newUser['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 1 //TODO
-    // newUser['room_id'] = currentRoom['room_id']
-    // pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [newUser['seat'], newUser['room_id'], newUser['id']], (err, res) => {
-    //   if (err) {
-    //     console.log(err);
-    //     return;
-    //   }
-    // });
-    // console.log(`User ${newUser['surname']} sits in room ${newUser['room_id']} in place ${newUser['seat']} :4: avail_seat = ${currentRoom['available_seats']} has left`);
-    // return;
-    // }
   }
   else {
-    // if (currentRoom['available_seats'] === 1) {
-    //   for (const room of placements) {
-    //     if (room['available_seats'] > 1) {
-    //       currentRoom = room;
-    //       break;
-    //     }
-    //   }
-    // }
-    // if (currentRoom['number_of_seats'] - currentRoom['available_seats'] === 0) {
-    //   currentRoom['available_seats']--;
-    //   newUser['seat'] = currentRoom['number_of_seats'] - currentRoom['available_seats'];
-    //   newUser['room_id'] = currentRoom['room_id']
-    //   pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [currentRoom['available_seats'], currentRoom['room_id']], (err, res) => {
-    //     if (err) {
-    //       console.log(err);
-    //       return;
-    //     }
-    //   });
-    //   pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [newUser['seat'], newUser['room_id'], newUser['id']], (err, res) => {
-    //     if (err) {
-    //       console.log(err);
-    //       return;
-    //     }
-    //   });
-    //   console.log(`User ${newUser['surname']} sits in room ${newUser['room_id']} in place ${newUser['seat']} :5: avail_seat = ${currentRoom['available_seats']} has left`);
-    //   return;
-    // }
-    // else {
-    // newUser['seat'] = (currentRoom['number_of_seats'] - currentRoom['available_seats']) + 1;
-    newUser['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 2 //TODO
+    newUser['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 2
     if (newUser['seat'] > currentRoom['number_of_seats']) {
       currentRoomIndex += 1
+      if ((currentRoomIndex == placements.length)) {
+        console.log('All rooms occupied')
+        pool.query('DELETE FROM users WHERE id = $1', [newUser['id']], (err, res) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(`User with id ${newUser['id']} removed from database`);
+          }
+        });
+        return
+      }
       currentRoom = placements[currentRoomIndex]
       const newFilteredUsers = users.filter(user => user['room_id'] === currentRoom['room_id']);
       const newSortedUsers = newFilteredUsers.sort((a, b) => a['seat'] - b['seat']);
@@ -232,7 +167,6 @@ function setPerson(newUser, placements, users) {
     }
 
   }
-  // }
 }
 
 router.get('/', async (req, res) => {
