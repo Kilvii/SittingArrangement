@@ -1,6 +1,12 @@
 version: '3.8'
 
 services:
+  node:
+    build: .
+    volumes:
+      - ./:/app/
+    ports:
+      - 3000:3000
   db:
     image: postgres:16.1
     ports:
