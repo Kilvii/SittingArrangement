@@ -1,7 +1,7 @@
 -- Active: 1711300450065@@127.0.0.1@5432@arrangement@public
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS participants;
 
-CREATE TABLE users
+CREATE TABLE participants
 (
     id SERIAL PRIMARY KEY,
     surname TEXT,

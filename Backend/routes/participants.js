@@ -18,8 +18,7 @@ function setPerson(userToSeat, placements, users) {
   }
   //XXX: Если все помещения заняты
   if (availableRoom === null) {
-    // console.log('All rooms occupied')
-    pool.query('DELETE FROM users WHERE id = $1', [userToSeat['id']], (err, res) => {
+    pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
       if (err) {
         console.log(err);
       } else {
@@ -44,7 +43,7 @@ function setPerson(userToSeat, placements, users) {
         return;
       }
     });
-    pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+    pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
       if (err) {
         console.log(err);
         return;
@@ -68,7 +67,7 @@ function setPerson(userToSeat, placements, users) {
             return;
           }
         });
-        pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+        pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
           if (err) {
             console.log(err);
             return;
@@ -89,7 +88,7 @@ function setPerson(userToSeat, placements, users) {
         return;
       }
     });
-    pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+    pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
       if (err) {
         console.log(err);
         return;
@@ -107,8 +106,8 @@ function setPerson(userToSeat, placements, users) {
     if (userToSeat['seat'] > availableRoom['number_of_seats']) {
       availableRoomIndex += 1
       if ((availableRoomIndex == placements.length)) {
-        // console.log('Cant set this person here')
-        pool.query('DELETE FROM users WHERE id = $1', [userToSeat['id']], (err, res) => {
+        //XXX: Нельзя посадить сюда человека
+        pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
           if (err) {
             console.log(err);
           } else {
@@ -133,7 +132,7 @@ function setPerson(userToSeat, placements, users) {
             return;
           }
         });
-        pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+        pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
           if (err) {
             console.log(err);
             return;
@@ -153,7 +152,7 @@ function setPerson(userToSeat, placements, users) {
             return;
           }
         });
-        pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+        pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
           if (err) {
             console.log(err);
             return;
@@ -173,7 +172,7 @@ function setPerson(userToSeat, placements, users) {
           return;
         }
       });
-      pool.query('UPDATE users SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+      pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
         if (err) {
           console.log(err);
           return;
@@ -188,9 +187,9 @@ function setPerson(userToSeat, placements, users) {
 
 router.get('/', async (req, res) => {
   try {
-    const data = await pool.query('SELECT * FROM users')
+    const data = await pool.query('SELECT * FROM participants')
     res.status(200).send({
-      message: "Successfully get all users",
+      message: "Successfully get all participants",
       children: data.rows
     })
   } catch (err) {
@@ -202,16 +201,15 @@ router.get('/', async (req, res) => {
 router.post('/store', async (req, res) => {
   try {
     const { surname, firstname, patronymic, gender, birthdate, age, phone, email, school, address, classroom, subject, citizenship, passport_series, passport_number } = req.body
-    const result = await pool.query('INSERT INTO users (surname, firstname, patronymic, gender, birthdate, age, phone, email, school, address, classroom, subject, citizenship, passport_series, passport_number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id',
+    const result = await pool.query('INSERT INTO participants (surname, firstname, patronymic, gender, birthdate, age, phone, email, school, address, classroom, subject, citizenship, passport_series, passport_number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id',
       [surname, firstname, patronymic, gender, birthdate, age, phone, email, school, address, classroom, subject, citizenship, passport_series, passport_number])
 
     const userId = result.rows[0].id
-    const userData = await pool.query('SELECT * FROM users WHERE id = $1', [userId])
+    const userData = await pool.query('SELECT * FROM participants WHERE id = $1', [userId])
     const placements = await pool.query('SELECT * FROM placements ORDER BY room_id')
-    const users = await pool.query('SELECT * FROM users')
+    const users = await pool.query('SELECT * FROM participants')
     const userToSeat = userData.rows[0]
     setPerson(userToSeat, placements.rows, users.rows)
-    // console.log(userToSeat)
 
     res.status(200).send({
       message: `Successfully added user`,
@@ -226,7 +224,7 @@ router.post('/store', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const user_id = req.params.id
-    const data = await pool.query('SELECT * FROM users WHERE id=$1', [user_id])
+    const data = await pool.query('SELECT * FROM participants WHERE id=$1', [user_id])
     res.status(200).send({
       message: "Successfully get user",
       children: data.rows

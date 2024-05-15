@@ -1,12 +1,10 @@
-### 80.242.56.152:5432 - для изменения бд
-### 80.242.56.152:13000 - для работы с бд
-
 ### Server requests
 ###
-GET http://80.242.56.152:13000/api/placements/
+GET http://5.42.220.6:3000/api/placements/
 
 ###
-GET http://80.242.56.152:5432/api/placements/
+GET http://5.42.220.6:3000/api/users/
+
 
 ### Placements
 ###
@@ -25,15 +23,15 @@ Content-Type: application/json
     "available_seats": 30
 }
 
-### users
+### participants
 ###
-GET http://localhost:3000/api/users/
+GET http://localhost:3000/api/participants/
 
 ###
-GET http://localhost:3000/api/users/2
+GET http://localhost:3000/api/participants/2
 
 ###
-POST http://localhost:3000/api/users/store
+POST http://localhost:3000/api/participants/store
 Content-Type: application/json
 
 {
@@ -53,3 +51,33 @@ Content-Type: application/json
     "passport_series": 1234,
     "passport_number": 123456
 }
+
+
+### organizers
+###
+GET http://localhost:3000/api/organizers/
+
+###
+GET http://localhost:3000/api/organizers/Evangelion@gmail.com&iloveasuka
+
+###
+POST http://localhost:3000/api/organizers/store
+Content-Type: application/json
+
+{
+    "surname": "Отакус",
+    "firstname": "Виб",
+    "patronymic": "Лович",
+    "faculty": "ФМИиТ",
+    "student_group": 303,
+    "email": "Evangelion@gmail.com",
+    "password": "iloveasuka"
+
+}
+
+### logs
+###
+GET http://localhost:3000/api/logging/
+
+###
+GET http://localhost:3000/api/logging/2

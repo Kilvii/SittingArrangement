@@ -1,5 +1,5 @@
 ###
-POST http://localhost:3000/api/users/store
+POST http://localhost:3000/api/participants/store
 Content-Type: application/json
 
 {
@@ -21,7 +21,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:3000/api/users/store
+POST http://localhost:3000/api/participants/store
 Content-Type: application/json
 
 {
@@ -43,7 +43,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:3000/api/users/store
+POST http://localhost:3000/api/participants/store
 Content-Type: application/json
 
 {
@@ -65,7 +65,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:3000/api/users/store
+POST http://localhost:3000/api/participants/store
 Content-Type: application/json
 
 {
