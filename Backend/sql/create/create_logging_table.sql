@@ -4,6 +4,5 @@ DROP TABLE IF EXISTS logging;
 CREATE TABLE logging
 (
     id SERIAL PRIMARY KEY,
-    organizer_id INT,
     log_message TEXT
 );
