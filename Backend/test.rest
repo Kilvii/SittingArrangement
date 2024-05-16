@@ -81,3 +81,12 @@ GET http://localhost:3000/api/logging/
 
 ###
 GET http://localhost:3000/api/logging/2
+
+###
+POST http://localhost:3000/api/logging/store
+Content-Type: application/json
+
+{
+    "organizer_id": 4,
+    "log_message": "Организатор не смог внести участника в базу данных. Причина: Все комнаты заполнены"
+}

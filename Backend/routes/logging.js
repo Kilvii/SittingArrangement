@@ -29,4 +29,18 @@ router.get('/:organizer_id', async (req, res) => {
     }
 })
 
+router.post('/store', async (req, res) => {
+    try {
+        const { organizer_id, log_message } = req.body
+        await pool.query('INSERT INTO logging (organizer_id, log_message ) VALUES ($1, $2)',
+            [organizer_id, log_message])
+        res.status(200).send({
+            message: `Successfully added log`
+        })
+    } catch (err) {
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
+
 module.exports = router;
