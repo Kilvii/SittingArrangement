@@ -2,3 +2,5 @@
 INSERT INTO placements (room_id, number_of_seats, available_seats) VALUES (220, 30, 30);
 INSERT INTO placements (room_id, number_of_seats, available_seats) VALUES (212, 30, 30);
 INSERT INTO placements (room_id, number_of_seats, available_seats) VALUES (309, 24, 24);
+INSERT INTO placements (room_id, number_of_seats, available_seats) VALUES (419, 1, 1);
+INSERT INTO placements (room_id, number_of_seats, available_seats) VALUES (422, 1, 1);

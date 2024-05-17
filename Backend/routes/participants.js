@@ -2,11 +2,10 @@ var express = require('express');
 var router = express.Router();
 const pool = require('../db')
 
-function handleUserSeatingError(user) {
-  throw new Error(`Cannot seat user ${user.surname}`);
-}
-
 function setPerson(userToSeat, placements, users) {
+  //XXX: return 2 - not avail room error
+  //XXX: return 1 - not next seat error
+  //XXX: return 0 - without error
   let availableRoom = null;
   let availableRoomIndex = 0;
   for (room of placements) {
@@ -25,8 +24,7 @@ function setPerson(userToSeat, placements, users) {
         console.log(`User with id ${userToSeat['id']} removed from database`);
       }
     });
-    handleUserSeatingError(userToSeat)
-    return
+    return 2;
   }
 
   const filteredUsers = users.filter(user => user['room_id'] === availableRoom['room_id']);
@@ -50,7 +48,7 @@ function setPerson(userToSeat, placements, users) {
       }
     });
     console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :start: avail_seat = ${availableRoom['available_seats']} has left`);
-    return;
+    return 0;
   }
 
   //XXX: Если люди из разных школ
@@ -74,7 +72,7 @@ function setPerson(userToSeat, placements, users) {
           }
         });
         console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert between: avail_seat = ${availableRoom['available_seats']} has left`);
-        return;
+        return 0;
       }
     }
 
@@ -95,7 +93,7 @@ function setPerson(userToSeat, placements, users) {
       }
     });
     console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert next:  avail_seat = ${availableRoom['available_seats']} has left`);
-    return;
+    return 0;
 
   }
 
@@ -114,8 +112,7 @@ function setPerson(userToSeat, placements, users) {
             console.log(`User with id ${userToSeat['id']} removed from database`);
           }
         });
-        handleUserSeatingError(userToSeat)
-        return
+        return 1;
       }
       availableRoom = placements[availableRoomIndex]
       const newFilteredUsers = users.filter(user => user['room_id'] === availableRoom['room_id']);
@@ -139,7 +136,7 @@ function setPerson(userToSeat, placements, users) {
           }
         });
         console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :jump room start: avail_seat = ${availableRoom['available_seats']} has left`);
-        return;
+        return 0;
       }
       //XXX: Если после перемещения добавляемый объект не первый
       else {
@@ -159,7 +156,7 @@ function setPerson(userToSeat, placements, users) {
           }
         });
         console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :jums room insert: avail_seat = ${availableRoom['available_seats']} has left`);
-        return;
+        return 0;
       }
     }
     //XXX: Переход на другое помещение не нужен
@@ -179,7 +176,7 @@ function setPerson(userToSeat, placements, users) {
         }
       });
       console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :jums insert: avail_seat = ${availableRoom['available_seats']} has left`);
-      return;
+      return 0;
     }
 
   }
@@ -209,12 +206,24 @@ router.post('/store', async (req, res) => {
     const placements = await pool.query('SELECT * FROM placements ORDER BY room_id')
     const users = await pool.query('SELECT * FROM participants')
     const userToSeat = userData.rows[0]
-    setPerson(userToSeat, placements.rows, users.rows)
+    const resCode = setPerson(userToSeat, placements.rows, users.rows)
 
-    res.status(200).send({
-      message: `Successfully added user`,
-      user: userData.rows[0]
-    })
+    if(resCode === 2) {
+      res.status(200).send({
+        message: `All rooms are occupied`,
+      })
+    }
+    else if(resCode === 1) {
+      res.status(200).send({
+        message: `Students from the same school will be sitting next to each other`,
+      })
+    }
+    else{
+      res.status(200).send({
+        message: `Successfully added participants`,
+        user: userData.rows[0]
+      })
+    }
   } catch (err) {
     console.log(err)
     res.sendStatus(500)
@@ -226,7 +235,7 @@ router.get('/:id', async (req, res) => {
     const user_id = req.params.id
     const data = await pool.query('SELECT * FROM participants WHERE id=$1', [user_id])
     res.status(200).send({
-      message: "Successfully get user",
+      message: "Successfully get participant",
       children: data.rows
     })
   } catch (err) {
