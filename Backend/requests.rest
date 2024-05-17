@@ -1,27 +1,51 @@
 ### Server requests
 ###
-GET http://5.42.220.6:3000/api/placements/
+GET http://5.42.220.6:3000/api/
 
 ### Placements
 ###
 GET http://localhost:3000/api/placements/
 
 ###
-GET http://localhost:3000/api/placements/309
+GET http://localhost:3000/api/placements/1
+
+###
+POST http://localhost:3000/api/placements/create
 
 ###
 POST http://localhost:3000/api/placements/store
 Content-Type: application/json
 
 {
-    "room_id": 218,
-    "number_of_seats": 30,
-    "available_seats": 30
+    "venue":"МГУ Им. Огарёва",
+    "room_id": 224,
+    "people_at_desk": 2,
+    "number_of_tables": 30,
+    "available_seats": 60
 }
+
+###
+POST http://localhost:3000/api/placements/drop
+
+###
+PUT http://localhost:3000/api/placements/2
+Content-Type: application/json
+
+{
+    "venue":"МГУ Им. Ломоносова",
+    "room_id": 212,
+    "people_at_desk": 2,
+    "number_of_tables": 13,
+    "available_seats": 547
+}
+
+
+###
+DELETE http://localhost:3000/api/placements/2
 
 ### participants
 ###
-GET http://localhost:3000/api/participants/
+GET http://5.42.220.6:3000/api/participants/
 
 ###
 GET http://localhost:3000/api/participants/2
@@ -39,7 +63,7 @@ Content-Type: application/json
     "age": 18,
     "phone": "+79273408180",
     "email": "beautygirl@gmail.com",
-    "school": "Лицей №12",
+    "school": "Лицей №11",
     "address": "Саранск",
     "classroom": 11,
     "subject": "Химия",
@@ -54,7 +78,13 @@ Content-Type: application/json
 GET http://localhost:3000/api/organizers/
 
 ###
-GET http://localhost:3000/api/organizers/Evangelion@gmail.com&iloveasuka
+GET http://localhost:3000/api/organizers/1
+
+###
+GET http://localhost:3000/api/organizers/check/Evangelion@gmail.com&iloveasuka
+
+###
+POST http://localhost:3000/api/organizers/create
 
 ###
 POST http://localhost:3000/api/organizers/store
@@ -71,12 +101,40 @@ Content-Type: application/json
 
 }
 
+###
+POST http://localhost:3000/api/organizers/drop
+
+###
+PUT http://localhost:3000/api/organizers/1
+Content-Type: application/json
+
+{
+    "surname": "Отакус",
+    "firstname": "Виб",
+    "patronymic": "Лович",
+    "faculty": "ФМИиТ",
+    "student_group": 303,
+    "venue": "МГУ им. Огарёва",
+    "email": "Evangelion@gmail.com",
+    "password": "iloveasuka"
+
+}
+
+###
+DELETE http://localhost:3000/api/placements/2
+
 ### logs
 ###
 GET http://localhost:3000/api/logging/
 
 ###
-GET http://localhost:3000/api/logging/2
+GET http://localhost:3000/api/logging/1
+
+###
+POST http://localhost:3000/api/logging/create
+
+###
+POST http://localhost:3000/api/logging/drop
 
 ###
 POST http://localhost:3000/api/logging/store

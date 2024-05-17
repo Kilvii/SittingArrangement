@@ -9,6 +9,7 @@ CREATE TABLE organizers
     patronymic TEXT,
     faculty TEXT,
     student_group INT,
+    venue TEXT DEFAULT "Не указано",
     email TEXT,
     password TEXT
     );

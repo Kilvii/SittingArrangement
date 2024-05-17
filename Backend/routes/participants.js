@@ -101,7 +101,7 @@ function setPerson(userToSeat, placements, users) {
   else {
     userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 2
     //XXX: Проверка на то, нужен ли переход на другое помещение
-    if (userToSeat['seat'] > availableRoom['number_of_seats']) {
+    if (userToSeat['seat'] > availableRoom['number_of_tables']) {
       availableRoomIndex += 1
       if ((availableRoomIndex == placements.length)) {
         //XXX: Нельзя посадить сюда человека

@@ -4,7 +4,9 @@ DROP TABLE IF EXISTS placements;
 CREATE TABLE placements
 (
     id SERIAL PRIMARY KEY,
+    venue TEXT,
     room_id INT,
-    number_of_seats INT,
-    available_seats INT 
+    people_at_desk INT,
+    number_of_tables INT,
+    available_seats INT
 );
