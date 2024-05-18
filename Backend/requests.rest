@@ -18,10 +18,22 @@ Content-Type: application/json
 
 {
     "venue":"МГУ Им. Огарёва",
+    "room_id": 128,
+    "people_at_desk": 1,
+    "number_of_tables": 30,
+    "available_seats": 30
+}
+
+###
+POST http://localhost:3000/api/placements/store
+Content-Type: application/json
+
+{
+    "venue":"МГУ Им. Огарёва",
     "room_id": 224,
     "people_at_desk": 2,
-    "number_of_tables": 30,
-    "available_seats": 60
+    "number_of_tables": 10,
+    "available_seats": 20
 }
 
 ###
@@ -45,10 +57,13 @@ DELETE http://localhost:3000/api/placements/2
 
 ### participants
 ###
-GET http://5.42.220.6:3000/api/participants/
+GET http://localhost:3000/api/participants/
 
 ###
 GET http://localhost:3000/api/participants/2
+
+###
+POST http://localhost:3000/api/participants/create
 
 ###
 POST http://localhost:3000/api/participants/store
@@ -63,7 +78,7 @@ Content-Type: application/json
     "age": 18,
     "phone": "+79273408180",
     "email": "beautygirl@gmail.com",
-    "school": "Лицей №11",
+    "school": "Лицей №2",
     "address": "Саранск",
     "classroom": 11,
     "subject": "Химия",
@@ -72,6 +87,34 @@ Content-Type: application/json
     "passport_number": 123456
 }
 
+###
+POST http://localhost:3000/api/participants/drop
+
+###
+PUT http://localhost:3000/api/participants/1
+Content-Type: application/json
+
+{
+    "surname": "Мариева",
+    "firstname": "Мария",
+    "patronymic": "Амеговная",
+    "gender": "Женский",
+    "birthdate": "2002-11-11",
+    "age": 27,
+    "phone": "+79273408180",
+    "email": "beautygirl@gmail.com",
+    "school": "Лицей №16",
+    "address": "Саранск",
+    "classroom": 11,
+    "subject": "Химия",
+    "citizenship": "Россия",
+    "passport_series": 1234,
+    "passport_number": 123456,
+    "venue": "МГУ им. Огарёва"
+}
+
+###
+DELETE http://localhost:3000/api/participants/2
 
 ### organizers
 ###
@@ -105,7 +148,7 @@ Content-Type: application/json
 POST http://localhost:3000/api/organizers/drop
 
 ###
-PUT http://localhost:3000/api/organizers/1
+PUT http://localhost:3000/api/organizers/3
 Content-Type: application/json
 
 {
@@ -121,7 +164,7 @@ Content-Type: application/json
 }
 
 ###
-DELETE http://localhost:3000/api/placements/2
+DELETE http://localhost:3000/api/organizers/2
 
 ### logs
 ###
@@ -143,3 +186,69 @@ Content-Type: application/json
 {
     "log_message": "Организатор не смог внести участника в базу данных. Причина: Все комнаты заполнены"
 }
+
+### interface_access
+###
+GET http://localhost:3000/api/interface_access/
+
+###
+GET http://localhost:3000/api/interface_access/1
+
+###
+POST http://localhost:3000/api/interface_access/create
+
+###
+POST http://localhost:3000/api/interface_access/store
+Content-Type: application/json
+
+{
+    "login": "Отакус",
+    "password": "123456"
+}
+
+###
+POST http://localhost:3000/api/interface_access/drop
+
+###
+PUT http://localhost:3000/api/interface_access/2
+Content-Type: application/json
+
+{
+    "login": "Отакус",
+    "password": "iloveasuka"
+}
+
+###
+DELETE http://localhost:3000/api/interface_access/2
+
+### venues
+###
+GET http://localhost:3000/api/venues/
+
+###
+GET http://localhost:3000/api/venues/1
+
+###
+POST http://localhost:3000/api/venues/create
+
+###
+POST http://localhost:3000/api/venues/store
+Content-Type: application/json
+
+{
+    "venue": "МГУ им. Огарёва"
+}
+
+###
+POST http://localhost:3000/api/venues/drop
+
+###
+PUT http://localhost:3000/api/venues/1
+Content-Type: application/json
+
+{
+    "venue": "Школа №13"
+}
+
+###
+DELETE http://localhost:3000/api/venues/1
