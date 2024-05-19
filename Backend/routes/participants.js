@@ -3,20 +3,25 @@ var router = express.Router();
 const pool = require('../db')
 
 function setPerson(userToSeat, placements, users) {
-  //XXX: return 2 - not avail room error
-  //XXX: return 1 - not next seat error
+  //XXX: return 2 - no available room
+  //XXX: return 1 - can't set next to same school
   //XXX: return 0 - without error
   let availableRoom = null;
-  let availableRoomIndex = 0;
   let roomSample = 0;
-  for (room of placements) {
-    if (room['available_seats'] > 0) {
-      availableRoom = room;
-      roomSample = room['people_at_desk'];
-      break;
-    }
-    availableRoomIndex += 1
+  if (placements.length == 1) {
+    availableRoom = placements[0];
+    roomSample = placements[0]['people_at_desk'];
   }
+  else {
+    for (key in placements) {
+      if (placements[key]['available_seats'] > 0) {
+        availableRoom = placements[key];
+        roomSample = placements[key]['people_at_desk'];
+        break;
+      }
+    }
+  }
+
   //XXX: Если все помещения заняты
   if (availableRoom === null) {
     pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
@@ -33,7 +38,7 @@ function setPerson(userToSeat, placements, users) {
   const sortedUsers = filteredUsers.sort((a, b) => a['seat'] - b['seat']);
 
   //XXX: Если это первый добавляемый объект в помещение
-  if (users.length == 1 || sortedUsers.length == 0) {
+  if (availableRoom['available_seats'] == availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
     availableRoom['available_seats']--;
     userToSeat['seat'] = 1;
     userToSeat['room_id'] = availableRoom['room_id']
@@ -100,14 +105,14 @@ function setPerson(userToSeat, placements, users) {
       return 0;
 
     }
-
     //XXX: Если люди из одной школы
     else {
       userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 2
       //XXX: Проверка на то, нужен ли переход на другое помещение
       if (userToSeat['seat'] > availableRoom['number_of_tables']) {
-        availableRoomIndex += 1
-        if ((availableRoomIndex == placements.length)) {
+        const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+        const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+        if (remainingRooms.length == 0) {
           //XXX: Нельзя посадить сюда человека
           pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
             if (err) {
@@ -118,52 +123,13 @@ function setPerson(userToSeat, placements, users) {
           });
           return 1;
         }
-        availableRoom = placements[availableRoomIndex]
-        const newFilteredUsers = users.filter(user => user['room_id'] === availableRoom['room_id']);
-        const newSortedUsers = newFilteredUsers.sort((a, b) => a['seat'] - b['seat']);
-
-        //XXX: Проверка на то, первый ли это объект после перемещения помещения
-        if (newSortedUsers.length == 0) {
-          availableRoom['available_seats']--;
-          userToSeat['seat'] = 1;
-          userToSeat['room_id'] = availableRoom['room_id']
-          pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
-            if (err) {
-              console.log(err);
-              return;
-            }
-          });
-          pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
-            if (err) {
-              console.log(err);
-              return;
-            }
-          });
-          console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :jump room start: avail_seat = ${availableRoom['available_seats']} has left`);
-          return 0;
-        }
-        //XXX: Если после перемещения добавляемый объект не первый
         else {
-          userToSeat['seat'] = newSortedUsers[newSortedUsers.length - 1]['seat'] + 2
-          userToSeat['room_id'] = availableRoom['room_id']
-          availableRoom['available_seats']--;
-          pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
-            if (err) {
-              console.log(err);
-              return;
-            }
-          });
-          pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
-            if (err) {
-              console.log(err);
-              return;
-            }
-          });
-          console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :jums room insert: avail_seat = ${availableRoom['available_seats']} has left`);
-          return 0;
+          userToSeat['seat'] = 0
+          console.log("Transition to next placement")
+          const code = setPerson(userToSeat, remainingRooms, users)
+          return code
         }
       }
-      //XXX: Переход на другое помещение не нужен
       else {
         userToSeat['room_id'] = availableRoom['room_id']
         availableRoom['available_seats']--;
@@ -186,7 +152,7 @@ function setPerson(userToSeat, placements, users) {
   }
   //XXX: Если в помещении 2 человека на парту
   else {
-    if (users.length <= 2) {
+    if ((filteredUsers.length + 1) <= 2) {
       //XXX: Если люди из разных школ
       if (userToSeat['school'] !== sortedUsers[sortedUsers.length - 1]['school']) {
         //XXX: Посадить на следующее место
@@ -208,8 +174,31 @@ function setPerson(userToSeat, placements, users) {
         console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert next:  avail_seat = ${availableRoom['available_seats']} has left`);
         return 0;
       }
+      //XXX: Люди из одной школы
       else {
         userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 4;
+        //XXX: Нужен ли переход на другое помещение
+        if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+          const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+          const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+          if (remainingRooms.length == 0) {
+            //XXX: Нельзя посадить сюда человека
+            pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+              if (err) {
+                console.log(err);
+              } else {
+                console.log(`User with id ${userToSeat['id']} removed from database`);
+              }
+            });
+            return 1;
+          }
+          else {
+            userToSeat['seat'] = 0
+            console.log("Transition to next placement")
+            const code = setPerson(userToSeat, remainingRooms, users)
+            return code
+          }
+        }
         userToSeat['room_id'] = availableRoom['room_id']
         availableRoom['available_seats']--;
         pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
@@ -229,8 +218,8 @@ function setPerson(userToSeat, placements, users) {
       }
     }
     else {
-      const parityAddition = users.length;
-      //XXX: Если люди из разных школ
+      const parityAddition = filteredUsers.length + 1;
+      //XXX: Если люди из разных школы
       if (userToSeat['school'] !== sortedUsers[sortedUsers.length - 1]['school']) {
         //XXX: Проверка на то, был ли скачок через место
         for (let i = 1; i < sortedUsers.length; i++) {
@@ -239,7 +228,7 @@ function setPerson(userToSeat, placements, users) {
             const endGapElem = sortedUsers[i];
             //XXX: Проверка: значение границ скачка совпадает ли со значением добавляемого
             if (userToSeat['school'] !== startGapElem['school'] && userToSeat['school'] !== endGapElem['school']) {
-              if (parityAddition <= 3) {
+              if ((i - 1) == 0) {
                 //XXX: Посадить рядом внутри скачка
                 userToSeat['seat'] = startGapElem['seat'] + 1
                 userToSeat['room_id'] = availableRoom['room_id']
@@ -281,8 +270,30 @@ function setPerson(userToSeat, placements, users) {
                   return 0;
                 }
                 else {
-                  const userWithSameSchool = sortedUsers[i - 2];
+                  const userWithSameSchool = sortedUsers.findLast(user => user['school'] === userToSeat['school']);
                   userToSeat['seat'] = userWithSameSchool['seat'] + 4
+                  //XXX: Нужен ли переход на другое помещение
+                  if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+                    const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+                    const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+                    if (remainingRooms.length == 0) {
+                      //XXX: Нельзя посадить сюда человека
+                      pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+                        if (err) {
+                          console.log(err);
+                        } else {
+                          console.log(`User with id ${userToSeat['id']} removed from database`);
+                        }
+                      });
+                      return 1;
+                    }
+                    else {
+                      userToSeat['seat'] = 0
+                      console.log("Transition to next placement")
+                      const code = setPerson(userToSeat, remainingRooms, users)
+                      return code
+                    }
+                  }
                   userToSeat['room_id'] = availableRoom['room_id']
                   availableRoom['available_seats']--;
                   pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
@@ -305,6 +316,28 @@ function setPerson(userToSeat, placements, users) {
             else {
               const userWithSameSchool = sortedUsers.findLast(user => user['school'] === userToSeat['school']);
               userToSeat['seat'] = userWithSameSchool['seat'] + 4
+              //XXX: Нужен ли переход на другое помещение
+              if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+                const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+                const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+                if (remainingRooms.length == 0) {
+                  //XXX: Нельзя посадить сюда человека
+                  pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+                    if (err) {
+                      console.log(err);
+                    } else {
+                      console.log(`User with id ${userToSeat['id']} removed from database`);
+                    }
+                  });
+                  return 1;
+                }
+                else {
+                  userToSeat['seat'] = 0
+                  console.log("Transition to next placement")
+                  const code = setPerson(userToSeat, remainingRooms, users)
+                  return code
+                }
+              }
               userToSeat['room_id'] = availableRoom['room_id']
               availableRoom['available_seats']--;
               pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
@@ -350,6 +383,28 @@ function setPerson(userToSeat, placements, users) {
           else {
             //XXX: Посадить на через 2 места
             userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 2
+            //XXX: Нужен ли переход на другое помещение
+            if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+              const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+              const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+              if (remainingRooms.length == 0) {
+                //XXX: Нельзя посадить сюда человека
+                pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+                  if (err) {
+                    console.log(err);
+                  } else {
+                    console.log(`User with id ${userToSeat['id']} removed from database`);
+                  }
+                });
+                return 1;
+              }
+              else {
+                userToSeat['seat'] = 0
+                console.log("Transition to next placement")
+                const code = setPerson(userToSeat, remainingRooms, users)
+                return code
+              }
+            }
             userToSeat['room_id'] = availableRoom['room_id']
             availableRoom['available_seats']--;
             pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
@@ -392,6 +447,28 @@ function setPerson(userToSeat, placements, users) {
           else {
             //XXX: Посадить на через 3 места
             userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 3
+            //XXX: Нужен ли переход на другое помещение
+            if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+              const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+              const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+              if (remainingRooms.length == 0) {
+                //XXX: Нельзя посадить сюда человека
+                pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+                  if (err) {
+                    console.log(err);
+                  } else {
+                    console.log(`User with id ${userToSeat['id']} removed from database`);
+                  }
+                });
+                return 1;
+              }
+              else {
+                userToSeat['seat'] = 0
+                console.log("Transition to next placement")
+                const code = setPerson(userToSeat, remainingRooms, users)
+                return code
+              }
+            }
             userToSeat['room_id'] = availableRoom['room_id']
             availableRoom['available_seats']--;
             pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
@@ -419,6 +496,28 @@ function setPerson(userToSeat, placements, users) {
             const userWithSameSchool = sortedUsers.findLast(user => user['school'] === userToSeat['school']);
             //XXX: Посадить на через 4 места
             userToSeat['seat'] = userWithSameSchool['seat'] + 4
+            //XXX: Нужен ли переход на другое помещение
+            if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+              const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+              const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+              if (remainingRooms.length == 0) {
+                //XXX: Нельзя посадить сюда человека
+                pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+                  if (err) {
+                    console.log(err);
+                  } else {
+                    console.log(`User with id ${userToSeat['id']} removed from database`);
+                  }
+                });
+                return 1;
+              }
+              else {
+                userToSeat['seat'] = 0
+                console.log("Transition to next placement")
+                const code = setPerson(userToSeat, remainingRooms, users)
+                return code
+              }
+            }
             userToSeat['room_id'] = availableRoom['room_id']
             availableRoom['available_seats']--;
             pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
@@ -442,6 +541,28 @@ function setPerson(userToSeat, placements, users) {
         if (parityAddition % 2 == 0) {
           //XXX: Посадить на через 4 места
           userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 4
+          //XXX: Нужен ли переход на другое помещение
+          if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+            const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+            const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+            if (remainingRooms.length == 0) {
+              //XXX: Нельзя посадить сюда человека
+              pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+                if (err) {
+                  console.log(err);
+                } else {
+                  console.log(`User with id ${userToSeat['id']} removed from database`);
+                }
+              });
+              return 1;
+            }
+            else {
+              userToSeat['seat'] = 0
+              console.log("Transition to next placement")
+              const code = setPerson(userToSeat, remainingRooms, users)
+              return code
+            }
+          }
           userToSeat['room_id'] = availableRoom['room_id']
           availableRoom['available_seats']--;
           pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
@@ -463,6 +584,28 @@ function setPerson(userToSeat, placements, users) {
         else {
           //XXX: Посадить на через 3 места
           userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 3
+          //XXX: Нужен ли переход на другое помещение
+          if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+            const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+            const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+            if (remainingRooms.length == 0) {
+              //XXX: Нельзя посадить сюда человека
+              pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+                if (err) {
+                  console.log(err);
+                } else {
+                  console.log(`User with id ${userToSeat['id']} removed from database`);
+                }
+              });
+              return 1;
+            }
+            else {
+              userToSeat['seat'] = 0
+              console.log("Transition to next placement")
+              const code = setPerson(userToSeat, remainingRooms, users)
+              return code
+            }
+          }
           userToSeat['room_id'] = availableRoom['room_id']
           availableRoom['available_seats']--;
           pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
