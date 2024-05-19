@@ -171,7 +171,7 @@ function setPerson(userToSeat, placements, users) {
             return;
           }
         });
-        console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert next:  avail_seat = ${availableRoom['available_seats']} has left`);
+        console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(1) insert next:  avail_seat = ${availableRoom['available_seats']} has left`);
         return 0;
       }
       //XXX: Люди из одной школы
@@ -213,7 +213,7 @@ function setPerson(userToSeat, placements, users) {
             return;
           }
         });
-        console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :jums insert: avail_seat = ${availableRoom['available_seats']} has left`);
+        console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(2) jums insert: avail_seat = ${availableRoom['available_seats']} has left`);
         return 0;
       }
     }
@@ -225,10 +225,11 @@ function setPerson(userToSeat, placements, users) {
         for (let i = 1; i < sortedUsers.length; i++) {
           if (sortedUsers[i]['seat'] - sortedUsers[i - 1]['seat'] !== 1) {
             const startGapElem = sortedUsers[i - 1];
+            const startGapElemIndex = i - 1;
             const endGapElem = sortedUsers[i];
             //XXX: Проверка: значение границ скачка совпадает ли со значением добавляемого
             if (userToSeat['school'] !== startGapElem['school'] && userToSeat['school'] !== endGapElem['school']) {
-              if ((i - 1) == 0) {
+              if (startGapElemIndex == 0) {
                 //XXX: Посадить рядом внутри скачка
                 userToSeat['seat'] = startGapElem['seat'] + 1
                 userToSeat['room_id'] = availableRoom['room_id']
@@ -245,33 +246,97 @@ function setPerson(userToSeat, placements, users) {
                     return;
                   }
                 });
-                console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert gap next:  avail_seat = ${availableRoom['available_seats']} has left`);
+                console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(3) insert gap next:  avail_seat = ${availableRoom['available_seats']} has left`);
                 return 0;
               }
               else {
                 if (userToSeat['school'] !== sortedUsers[i - 2]['school']) {
-                  //XXX: Посадить рядом внутри скачка
-                  userToSeat['seat'] = startGapElem['seat'] + 1
-                  userToSeat['room_id'] = availableRoom['room_id']
-                  availableRoom['available_seats']--;
-                  pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
-                    if (err) {
-                      console.log(err);
-                      return;
+                  if (startGapElemIndex != 1) {
+                    if (userToSeat['school'] !== sortedUsers[i - 3]['school']) {
+                      //XXX: Посадить рядом внутри скачка
+                      userToSeat['seat'] = startGapElem['seat'] + 1
+                      userToSeat['room_id'] = availableRoom['room_id']
+                      availableRoom['available_seats']--;
+                      pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
+                        if (err) {
+                          console.log(err);
+                          return;
+                        }
+                      });
+                      pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+                        if (err) {
+                          console.log(err);
+                          return;
+                        }
+                      });
+                      console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(4) insert gap next:  avail_seat = ${availableRoom['available_seats']} has left`);
+                      return 0;
                     }
-                  });
-                  pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
-                    if (err) {
-                      console.log(err);
-                      return;
+                    else {
+                      //XXX: 
+                      userToSeat['seat'] = sortedUsers[sortedUsers.length-1]['seat'] + 1
+                      if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
+                        const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
+                        const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
+                        if (remainingRooms.length == 0) {
+                          //XXX: Нельзя посадить сюда человека
+                          pool.query('DELETE FROM participants WHERE id = $1', [userToSeat['id']], (err, res) => {
+                            if (err) {
+                              console.log(err);
+                            } else {
+                              console.log(`User with id ${userToSeat['id']} removed from database`);
+                            }
+                          });
+                          return 1;
+                        }
+                        else {
+                          userToSeat['seat'] = 0
+                          console.log("Transition to next placement")
+                          const code = setPerson(userToSeat, remainingRooms, users)
+                          return code
+                        }
+                      }
+                      userToSeat['room_id'] = availableRoom['room_id']
+                      availableRoom['available_seats']--;
+                      pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
+                        if (err) {
+                          console.log(err);
+                          return;
+                        }
+                      });
+                      pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+                        if (err) {
+                          console.log(err);
+                          return;
+                        }
+                      });
+                      console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(5) insert gap next:  avail_seat = ${availableRoom['available_seats']} has left`);
+                      return 0;
                     }
-                  });
-                  console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert gap next:  avail_seat = ${availableRoom['available_seats']} has left`);
-                  return 0;
+                  }
+                  else {
+                    //XXX: Посадить рядом внутри скачка
+                    userToSeat['seat'] = startGapElem['seat'] + 1
+                    userToSeat['room_id'] = availableRoom['room_id']
+                    availableRoom['available_seats']--;
+                    pool.query('UPDATE placements SET available_seats = $1 WHERE room_id = $2', [availableRoom['available_seats'], availableRoom['room_id']], (err, res) => {
+                      if (err) {
+                        console.log(err);
+                        return;
+                      }
+                    });
+                    pool.query('UPDATE participants SET seat = $1, room_id = $2 WHERE id = $3', [userToSeat['seat'], userToSeat['room_id'], userToSeat['id']], (err, res) => {
+                      if (err) {
+                        console.log(err);
+                        return;
+                      }
+                    });
+                    console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(6) insert gap next:  avail_seat = ${availableRoom['available_seats']} has left`);
+                    return 0;
+                  }
                 }
                 else {
-                  const userWithSameSchool = sortedUsers.findLast(user => user['school'] === userToSeat['school']);
-                  userToSeat['seat'] = userWithSameSchool['seat'] + 4
+                  userToSeat['seat'] = sortedUsers[sortedUsers.length-1]['seat'] + 1
                   //XXX: Нужен ли переход на другое помещение
                   if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
                     const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
@@ -308,7 +373,7 @@ function setPerson(userToSeat, placements, users) {
                       return;
                     }
                   });
-                  console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert gap jump:  avail_seat = ${availableRoom['available_seats']} has left`);
+                  console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(7) insert gap jump:  avail_seat = ${availableRoom['available_seats']} has left`);
                   return 0;
                 }
               }
@@ -352,7 +417,7 @@ function setPerson(userToSeat, placements, users) {
                   return;
                 }
               });
-              console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert gap jump:  avail_seat = ${availableRoom['available_seats']} has left`);
+              console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(8) insert gap jump:  avail_seat = ${availableRoom['available_seats']} has left`);
               return 0;
             }
           }
@@ -377,7 +442,7 @@ function setPerson(userToSeat, placements, users) {
                 return;
               }
             });
-            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert next:  avail_seat = ${availableRoom['available_seats']} has left`);
+            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(9) insert next:  avail_seat = ${availableRoom['available_seats']} has left`);
             return 0;
           }
           else {
@@ -419,7 +484,7 @@ function setPerson(userToSeat, placements, users) {
                 return;
               }
             });
-            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert create jump:  avail_seat = ${availableRoom['available_seats']} has left`);
+            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(10) insert create jump:  avail_seat = ${availableRoom['available_seats']} has left`);
             return 0;
           }
         }
@@ -441,7 +506,7 @@ function setPerson(userToSeat, placements, users) {
                 return;
               }
             });
-            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert next:  avail_seat = ${availableRoom['available_seats']} has left`);
+            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(11) insert next:  avail_seat = ${availableRoom['available_seats']} has left`);
             return 0;
           }
           else {
@@ -483,7 +548,7 @@ function setPerson(userToSeat, placements, users) {
                 return;
               }
             });
-            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert create jump:  avail_seat = ${availableRoom['available_seats']} has left`);
+            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(12) insert create jump:  avail_seat = ${availableRoom['available_seats']} has left`);
             return 0;
           }
         }
@@ -532,7 +597,7 @@ function setPerson(userToSeat, placements, users) {
                 return;
               }
             });
-            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert jump:  avail_seat = ${availableRoom['available_seats']} has left`);
+            console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(13) insert jump:  avail_seat = ${availableRoom['available_seats']} has left`);
             return 0;
           }
         }
@@ -577,7 +642,7 @@ function setPerson(userToSeat, placements, users) {
               return;
             }
           });
-          console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert create jump:  avail_seat = ${availableRoom['available_seats']} has left`);
+          console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(14) insert create jump:  avail_seat = ${availableRoom['available_seats']} has left`);
           return 0;
 
         }
@@ -620,7 +685,7 @@ function setPerson(userToSeat, placements, users) {
               return;
             }
           });
-          console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :insert create jump:  avail_seat = ${availableRoom['available_seats']} has left`);
+          console.log(`User ${userToSeat['surname']} sits in room ${userToSeat['room_id']} in place ${userToSeat['seat']} :(15) insert create jump:  avail_seat = ${availableRoom['available_seats']} has left`);
           return 0;
 
         }
