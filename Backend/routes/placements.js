@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/create', async (req, res) => {
     try {
-        await pool.query("CREATE TABLE placements ( id SERIAL PRIMARY KEY, venue TEXT, room_id INT, people_at_desk INT, number_of_tables INT, available_seats INT);");
+        await pool.query("CREATE TABLE placements ( id SERIAL PRIMARY KEY, venue TEXT DEFAULT 'Не указано', room_id INT, people_at_desk INT, number_of_tables INT, available_seats INT);");
 
         res.sendStatus(201)
     } catch (err) {
