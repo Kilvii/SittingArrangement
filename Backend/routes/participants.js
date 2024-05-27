@@ -218,6 +218,7 @@ function setPerson(userToSeat, placements, users) {
       }
     }
     else {
+      //TODO: (5), (7), (8) have worng place at specific inputs
       const parityAddition = filteredUsers.length + 1;
       //XXX: Если люди из разных школы
       if (userToSeat['school'] !== sortedUsers[sortedUsers.length - 1]['school']) {
@@ -274,7 +275,15 @@ function setPerson(userToSeat, placements, users) {
                     }
                     else {
                       //XXX: 
-                      userToSeat['seat'] = sortedUsers[sortedUsers.length-1]['seat'] + 1
+                      const userWithSameSchool = sortedUsers.findLast(user => user['school'] === userToSeat['school']);
+                      const indexOfUserWithSameSchool = sortedUsers.findLastIndex(user => user['school'] === userToSeat['school']);
+                      if (indexOfUserWithSameSchool < startGapElemIndex) {
+                        userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 1
+                      }
+                      else {
+                        userToSeat['seat'] = userWithSameSchool['seat'] + 4
+                      }
+                      //XXX: Нужен ли переход на другое место
                       if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
                         const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
                         const remainingRooms = preRemainRooms.filter(room => (room.id !== availableRoom['id']));
@@ -336,7 +345,15 @@ function setPerson(userToSeat, placements, users) {
                   }
                 }
                 else {
-                  userToSeat['seat'] = sortedUsers[sortedUsers.length-1]['seat'] + 1
+                  const userWithSameSchool = sortedUsers.findLast(user => user['school'] === userToSeat['school']);
+                  const indexOfUserWithSameSchool = sortedUsers.findLastIndex(user => user['school'] === userToSeat['school']);
+                  if (indexOfUserWithSameSchool < startGapElemIndex) {
+                    userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 1
+                  }
+                  else {
+                    userToSeat['seat'] = userWithSameSchool['seat'] + 4
+                  }
+
                   //XXX: Нужен ли переход на другое помещение
                   if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
                     const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
@@ -380,7 +397,13 @@ function setPerson(userToSeat, placements, users) {
             }
             else {
               const userWithSameSchool = sortedUsers.findLast(user => user['school'] === userToSeat['school']);
-              userToSeat['seat'] = userWithSameSchool['seat'] + 4
+              const indexOfUserWithSameSchool = sortedUsers.findLastIndex(user => user['school'] === userToSeat['school']);
+              if (indexOfUserWithSameSchool <= startGapElemIndex) {
+                userToSeat['seat'] = sortedUsers[sortedUsers.length - 1]['seat'] + 1
+              }
+              else {
+                userToSeat['seat'] = userWithSameSchool['seat'] + 4
+              }
               //XXX: Нужен ли переход на другое помещение
               if (userToSeat['seat'] > availableRoom['number_of_tables'] * availableRoom['people_at_desk']) {
                 const preRemainRooms = placements.filter(room => (room.available_seats !== 0));
